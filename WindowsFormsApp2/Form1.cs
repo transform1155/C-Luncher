@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -72,6 +72,8 @@ namespace WindowsFormsApp2
 
         #region Version Management
 
+        private bool isOfflineMode = false;
+
         private async Task LoadVersionsAsync()
         {
             try
@@ -111,11 +113,59 @@ namespace WindowsFormsApp2
 
                 ApplyVersionFilter(currentFilter);
                 lblVersionTitle.Text = string.Format("已加载 {0} 个版本", allVersions.Count);
+                isOfflineMode = false;
             }
             catch (Exception ex)
             {
-                txtVersionInfo.Text = "加载版本失败: " + ex.Message;
+                txtVersionInfo.Text = "网络连接失败，正在切换到离线模式...";
+                LoadLocalVersions();
             }
+        }
+
+        private void LoadLocalVersions()
+        {
+            try
+            {
+                var localVersions = launcher.GetLocalVersions();
+
+                if (localVersions.Count == 0)
+                {
+                    txtVersionInfo.Text = "离线模式 - 未找到本地版本，请连接网络下载版本";
+                    lblVersionTitle.Text = "离线模式 - 无本地版本";
+                    isOfflineMode = true;
+                    return;
+                }
+
+                allVersions.Clear();
+
+                foreach (var localVer in localVersions)
+                {
+                    allVersions.Add(new VersionInfo
+                    {
+                        Id = localVer.Id,
+                        Type = localVer.Type,
+                        Url = null,
+                        ReleaseTime = localVer.ReleaseTime
+                    });
+                }
+
+                ApplyVersionFilter(currentFilter);
+                lblVersionTitle.Text = string.Format("离线模式 - 已加载 {0} 个本地版本", allVersions.Count);
+                txtVersionInfo.Text = "当前处于离线模式，显示本地已下载的版本。连接网络后点击刷新按钮获取完整版本列表。";
+                isOfflineMode = true;
+            }
+            catch (Exception ex)
+            {
+                txtVersionInfo.Text = "加载本地版本失败: " + ex.Message;
+            }
+        }
+
+        private bool IsVersionDownloaded(string versionId)
+        {
+            string versionDir = Path.Combine(launcher.GameDir, "versions", versionId);
+            string jsonPath = Path.Combine(versionDir, versionId + ".json");
+            string jarPath = Path.Combine(versionDir, versionId + ".jar");
+            return File.Exists(jsonPath) && File.Exists(jarPath);
         }
 
         private void ApplyVersionFilter(string filter)

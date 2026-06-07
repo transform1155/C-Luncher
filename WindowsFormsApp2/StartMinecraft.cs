@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -168,6 +168,66 @@ namespace WindowsFormsApp2
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync();
+        }
+
+        public List<LocalVersion> GetLocalVersions()
+        {
+            List<LocalVersion> versions = new List<LocalVersion>();
+            
+            string versionsDir = Path.Combine(GameDir, "versions");
+            if (!Directory.Exists(versionsDir))
+                return versions;
+
+            foreach (string dir in Directory.GetDirectories(versionsDir))
+            {
+                string versionId = Path.GetFileName(dir);
+                
+                string jsonPath = Path.Combine(dir, versionId + ".json");
+                string jarPath = Path.Combine(dir, versionId + ".jar");
+                
+                bool hasJson = File.Exists(jsonPath);
+                bool hasJar = File.Exists(jarPath);
+                
+                if (!hasJson && !hasJar)
+                    continue;
+
+                string type = "release";
+                string releaseTime = "";
+
+                if (hasJson)
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(jsonPath);
+                        var root = JsonNode.Parse(json);
+                        type = root?["type"]?.GetValue<string>() ?? "release";
+                        releaseTime = root?["releaseTime"]?.GetValue<string>() ?? "";
+                    }
+                    catch { }
+                }
+
+                versions.Add(new LocalVersion
+                {
+                    Id = versionId,
+                    Type = type,
+                    ReleaseTime = releaseTime,
+                    HasJson = hasJson,
+                    HasJar = hasJar,
+                    IsLaunchable = hasJson && hasJar
+                });
+            }
+
+            return versions.OrderByDescending(v => v.ReleaseTime).ToList();
+        }
+
+        public class LocalVersion
+        {
+            public string Id { get; set; }
+            public string Type { get; set; }
+            public string ReleaseTime { get; set; }
+            public bool HasJson { get; set; }
+            public bool HasJar { get; set; }
+            public bool IsLaunchable { get; set; }
         }
 
         public void ParseVersionManifest()
