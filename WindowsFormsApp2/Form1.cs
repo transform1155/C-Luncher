@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -115,7 +115,7 @@ namespace WindowsFormsApp2
                 lblVersionTitle.Text = string.Format("已加载 {0} 个版本", allVersions.Count);
                 isOfflineMode = false;
             }
-            catch (Exception ex)
+            catch
             {
                 txtVersionInfo.Text = "网络连接失败，正在切换到离线模式...";
                 LoadLocalVersions();
@@ -231,25 +231,27 @@ namespace WindowsFormsApp2
         {
             selectedVersion = version;
 
-            // Update UI
             foreach (VersionCard card in panelVersionList.Controls)
             {
                 card.IsSelected = (card.VersionId == version.Id);
             }
 
-            // Ensure detail panel and controls are visible
             panelVersionInfo.Visible = true;
             panelVersionInfo.BringToFront();
             lblVersionTitle.Visible = true;
             lblVersionType.Visible = true;
             txtVersionInfo.Visible = true;
-            btnDownloadVersion.Visible = true;
             btnLaunchVersion.Visible = true;
+
+            bool isDownloaded = IsVersionDownloaded(version.Id);
+            bool canDownload = !isOfflineMode && !isDownloaded;
+            
+            btnDownloadVersion.Visible = canDownload;
+            btnDownloadVersion.Enabled = canDownload;
 
             lblVersionTitle.Text = version.Id;
             lblVersionType.Text = version.Type.ToUpper();
 
-            // Apply color based on version type
             Color themeColor;
             switch (version.Type.ToLower())
             {
@@ -265,55 +267,74 @@ namespace WindowsFormsApp2
             }
 
             headerPanel.BackColor = themeColor;
-            btnDownloadVersion.BackColor = ColorSchemes.Info;
+            if (canDownload)
+            {
+                btnDownloadVersion.BackColor = ColorSchemes.Info;
+                btnDownloadVersion.ForeColor = Color.White;
+            }
             btnLaunchVersion.BackColor = ColorSchemes.Success;
-            btnDownloadVersion.ForeColor = Color.White;
             btnLaunchVersion.ForeColor = Color.White;
 
-            // Show version info
-            txtVersionInfo.Text = GetVersionDescription(version);
+            txtVersionInfo.Text = GetVersionDescription(version, isDownloaded);
 
-            // Show launch settings
-            panelLaunchSettings.Visible = true;
+            panelLaunchSettings.Visible = isDownloaded;
         }
 
-        private string GetVersionDescription(VersionInfo version)
+        private string GetVersionDescription(VersionInfo version, bool isDownloaded = false)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Version: " + version.Id);
-            sb.AppendLine("Type: " + version.Type.ToUpper());
-            sb.AppendLine("Released: " + FormatReleaseTime(version.ReleaseTime));
+            sb.AppendLine("版本: " + version.Id);
+            sb.AppendLine("类型: " + version.Type.ToUpper());
+            sb.AppendLine("发布时间: " + FormatReleaseTime(version.ReleaseTime));
+            
+            if (isOfflineMode)
+            {
+                sb.AppendLine();
+                sb.AppendLine("【离线模式】");
+                sb.AppendLine("当前无法连接网络，显示的是本地已下载的版本");
+            }
+            
+            if (isDownloaded)
+            {
+                sb.AppendLine();
+                sb.AppendLine("✓ 已下载，可以启动");
+            }
+            else if (!isOfflineMode)
+            {
+                sb.AppendLine();
+                sb.AppendLine("✗ 未下载，请先下载");
+            }
+            
             sb.AppendLine();
 
-            // Add version-specific descriptions
             if (version.Type.Equals("release", StringComparison.OrdinalIgnoreCase))
             {
-                sb.AppendLine("This is an official stable release.");
+                sb.AppendLine("这是一个官方稳定版本。");
                 sb.AppendLine();
-                sb.AppendLine("Features:");
-                sb.AppendLine("- Stable gameplay experience");
-                sb.AppendLine("- Recommended for most players");
-                sb.AppendLine("- Full mod compatibility");
+                sb.AppendLine("特点:");
+                sb.AppendLine("- 稳定的游戏体验");
+                sb.AppendLine("- 推荐大多数玩家使用");
+                sb.AppendLine("- 完整的模组兼容性");
             }
             else if (version.Type.Equals("snapshot", StringComparison.OrdinalIgnoreCase))
             {
-                sb.AppendLine("This is a development snapshot.");
+                sb.AppendLine("这是一个开发快照版本。");
                 sb.AppendLine();
-                sb.AppendLine("Note:");
-                sb.AppendLine("- May contain bugs");
-                sb.AppendLine("- Features are subject to change");
-                sb.AppendLine("- Not recommended for production worlds");
+                sb.AppendLine("注意:");
+                sb.AppendLine("- 可能包含 bug");
+                sb.AppendLine("- 特性可能会改变");
+                sb.AppendLine("- 不建议用于生产存档");
             }
             else if (version.Type.Equals("april_fool", StringComparison.OrdinalIgnoreCase) ||
                      version.Id.Contains("20w14infinite") ||
                      version.Id.Contains("15w14a"))
             {
-                sb.AppendLine("This is an April Fool's version!");
+                sb.AppendLine("这是一个愚人节版本！");
                 sb.AppendLine();
-                sb.AppendLine("Fun features:");
-                sb.AppendLine("- Special joke content");
-                sb.AppendLine("- Unique gameplay mechanics");
-                sb.AppendLine("- Limited time features");
+                sb.AppendLine("有趣的特性:");
+                sb.AppendLine("- 特殊玩笑内容");
+                sb.AppendLine("- 独特的游戏机制");
+                sb.AppendLine("- 限时特性");
             }
 
             return sb.ToString();
@@ -325,6 +346,12 @@ namespace WindowsFormsApp2
 
         private async void btnFilter_Click(object sender, EventArgs e)
         {
+            if (sender == btnRefreshVersions)
+            {
+                await LoadVersionsAsync();
+                return;
+            }
+
             if (allVersions.Count == 0)
             {
                 await LoadVersionsAsync();

@@ -31,6 +31,7 @@ namespace WindowsFormsApp2
             this.btnFilterRelease = new ModernButton();
             this.btnFilterSnapshot = new ModernButton();
             this.btnFilterAprilFool = new ModernButton();
+            this.btnRefreshVersions = new ModernButton();
             this.panelVersionList = new System.Windows.Forms.FlowLayoutPanel();
             this.panelVersionInfo = new System.Windows.Forms.Panel();
             this.lblVersionTitle = new System.Windows.Forms.Label();
@@ -145,6 +146,7 @@ namespace WindowsFormsApp2
             this.panelVersionFilter.Controls.Add(this.btnFilterRelease);
             this.panelVersionFilter.Controls.Add(this.btnFilterSnapshot);
             this.panelVersionFilter.Controls.Add(this.btnFilterAprilFool);
+            this.panelVersionFilter.Controls.Add(this.btnRefreshVersions);
             this.panelVersionFilter.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelVersionFilter.Location = new System.Drawing.Point(10, 10);
             this.panelVersionFilter.Name = "panelVersionFilter";
@@ -203,6 +205,19 @@ namespace WindowsFormsApp2
             this.btnFilterAprilFool.Text = "愚人节";
             this.btnFilterAprilFool.BorderRadius = 13;
             this.btnFilterAprilFool.Click += new System.EventHandler(this.btnFilter_Click);
+
+            //
+            // btnRefreshVersions
+            //
+            this.btnRefreshVersions.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(91)))), ((int)(((byte)(192)))), ((int)(((byte)(222)))));
+            this.btnRefreshVersions.ForeColor = System.Drawing.Color.White;
+            this.btnRefreshVersions.Location = new System.Drawing.Point(760, 12);
+            this.btnRefreshVersions.Name = "btnRefreshVersions";
+            this.btnRefreshVersions.Size = new System.Drawing.Size(90, 26);
+            this.btnRefreshVersions.TabIndex = 4;
+            this.btnRefreshVersions.Text = "刷新列表";
+            this.btnRefreshVersions.BorderRadius = 13;
+            this.btnRefreshVersions.Click += new System.EventHandler(this.btnFilter_Click);
 
             //
             // panelVersionList
@@ -698,6 +713,7 @@ namespace WindowsFormsApp2
         private ModernButton btnFilterRelease;
         private ModernButton btnFilterSnapshot;
         private ModernButton btnFilterAprilFool;
+        private ModernButton btnRefreshVersions;
         private System.Windows.Forms.FlowLayoutPanel panelVersionList;
         private System.Windows.Forms.Panel panelVersionInfo;
         private System.Windows.Forms.Label lblVersionTitle;
