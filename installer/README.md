@@ -1,6 +1,6 @@
 # Installer 目录说明
 
-本目录包含 Minecraft 启动器的 Windows 安装程序脚本和相关资源。
+本目录包含 C-Luncher 的 Windows 安装程序脚本和相关资源。
 
 ## 生成安装程序的方式
 
